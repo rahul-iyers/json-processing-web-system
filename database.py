@@ -64,8 +64,7 @@ def _now() -> str:
 
 def _row_to_dict(row: sqlite3.Row) -> dict:
     """
-    Convert a sqlite3.Row to a plain dict, deserializing the 'result'
-    field from a JSON string back to a Python dict if present.
+    convert a sqlite3.Row to a plain dict
     """
     d = dict(row)
     if d.get("result") is not None:
@@ -76,8 +75,8 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
 # write functions
 def create_task(task_id: str, dataset_id: str, filename: str) -> dict:
     """
-    Insert a new task in 'pending' status and return it as a dict.
-    This is called by the route handler immediately after the file is
+    insert a new task in 'pending' status and return it as a dict.
+    called by the route handler immediately after the file is
     validated, before the task is put on the queue.
     """
     now = _now()
@@ -93,7 +92,7 @@ def create_task(task_id: str, dataset_id: str, filename: str) -> dict:
 
 
 def set_processing(task_id: str) -> None:
-    """Mark a task as processing. Called by the worker before computation begins."""
+    """mark a task as processing, called by the worker before computation begins."""
     with get_connection() as conn:
         conn.execute(
             "UPDATE tasks SET status='processing', updated_at=? WHERE id=?",
@@ -103,8 +102,8 @@ def set_processing(task_id: str) -> None:
 
 def set_completed(task_id: str, result: dict) -> None:
     """
-    Mark a task as completed and store the result.
-    The result dict is serialized to a JSON string for storage.
+    mark a task as completed and store the result.
+    result dict is serialized to a JSON string for storage.
     """
     with get_connection() as conn:
         conn.execute(
@@ -114,7 +113,7 @@ def set_completed(task_id: str, result: dict) -> None:
 
 
 def set_failed(task_id: str, error: str) -> None:
-    """Mark a task as failed and store the error message."""
+    """mark a task as failed and store the error message."""
     with get_connection() as conn:
         conn.execute(
             "UPDATE tasks SET status='failed', error=?, updated_at=? WHERE id=?",
@@ -125,7 +124,7 @@ def set_failed(task_id: str, error: str) -> None:
 # read functions
 def get_task(task_id: str) -> dict | None:
     """
-    Fetch a single task by ID. Returns a dict (with result deserialized)
+    fetch a single task by ID and returns a dict (with result deserialized)
     or None if no task with that ID exists.
     """
     with get_connection() as conn:
@@ -137,9 +136,7 @@ def get_task(task_id: str) -> dict | None:
 
 def get_all_tasks() -> list[dict]:
     """
-    Fetch all tasks ordered by creation time (newest first).
-    The 'result' field is intentionally excluded here to keep the
-    list payload small — full results are fetched per-task.
+    fetch all tasks ordered by creation time (newest first).
     """
     with get_connection() as conn:
         rows = conn.execute(
@@ -155,8 +152,8 @@ def get_all_tasks() -> list[dict]:
 # startup recovery  
 def get_stuck_tasks() -> list[dict]:
     """
-    Find tasks that were left in 'processing' status from a previous
-    server run. These will never complete on their own and must be
+    find tasks that were left in 'processing' status from a previous
+    server run, these will never complete on their own and must be
     handled during startup recovery.
     """
     with get_connection() as conn:
@@ -167,7 +164,7 @@ def get_stuck_tasks() -> list[dict]:
 
 
 def reset_task(task_id: str) -> bool:
-    """Reset a failed task back to pending so it can be re-enqueued. Returns False if not found."""
+    """reset a failed task back to pending so it can be re-enqueued, returns False if not found."""
     with get_connection() as conn:
         cur = conn.execute(
             "UPDATE tasks SET status='pending', error=NULL, updated_at=? WHERE id=? AND status='failed'",
@@ -177,7 +174,7 @@ def reset_task(task_id: str) -> bool:
 
 
 def delete_task(task_id: str) -> bool:
-    """Delete a task by ID. Returns True if a row was deleted, False if not found."""
+    """delete a task by ID, returns True if a row was deleted, False if not found."""
     with get_connection() as conn:
         cur = conn.execute("DELETE FROM tasks WHERE id=?", (task_id,))
     return cur.rowcount > 0
@@ -185,10 +182,7 @@ def delete_task(task_id: str) -> bool:
 
 def get_pending_tasks() -> list[dict]:
     """
-    Find tasks in 'pending' status. On a clean shutdown these shouldn't
-    exist (pending tasks are queued in memory and processed before shutdown),
-    but if the server crashed before the worker picked them up, they'll
-    be sitting here. We re-enqueue them on startup.
+    find tasks in 'pending' status.
     """
     with get_connection() as conn:
         rows = conn.execute(
