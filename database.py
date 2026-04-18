@@ -1,17 +1,8 @@
 """
 database.py
 
-All SQLite interaction lives here. Nothing else in the codebase
-touches the database directly — everything goes through these functions.
+all SQLite interaction is here.
 
-We use Python's stdlib sqlite3 module (no ORM, no external deps).
-The connection is created fresh per call rather than shared globally,
-which avoids threading issues when FastAPI's worker and route handlers
-both write concurrently.
-
-WAL mode (Write-Ahead Logging) is enabled so readers don't block writers
-and writers don't block readers — important since our worker is writing
-status updates while the routes are reading task lists.
 """
 
 import json
@@ -21,24 +12,20 @@ from datetime import datetime, timezone
 DB_PATH = "tasks.db"
 
 
-# ── Connection helper ────────────────────────────────────────────────────────
-
+# connection helper
 def get_connection() -> sqlite3.Connection:
     """
-    Open a connection to the SQLite database with sensible defaults:
-      - row_factory = sqlite3.Row  → rows behave like dicts (row["column"])
-      - WAL journal mode           → concurrent reads + writes without blocking
-      - foreign_keys = ON          → enforce referential integrity (good habit)
+    open a connection to the SQLite database:
+      - row_factory = sqlite3.Row  -> rows behave like dicts (row["column"])
+      - WAL journal mode           -> concurrent reads & writes without blocking
     """
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA foreign_keys=ON")
     return conn
 
 
-# ── Schema ───────────────────────────────────────────────────────────────────
-
+# schema
 def init_db() -> None:
     """
     Create the tasks table if it doesn't already exist.
@@ -69,10 +56,9 @@ def init_db() -> None:
         """)
 
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
-
+# helpers
 def _now() -> str:
-    """Return the current UTC time as an ISO 8601 string."""
+    """return the current UTC time as an iso string."""
     return datetime.now(timezone.utc).isoformat()
 
 
@@ -87,8 +73,7 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
     return d
 
 
-# ── Write functions ──────────────────────────────────────────────────────────
-
+# write functions
 def create_task(task_id: str, dataset_id: str, filename: str) -> dict:
     """
     Insert a new task in 'pending' status and return it as a dict.
@@ -137,8 +122,7 @@ def set_failed(task_id: str, error: str) -> None:
         )
 
 
-# ── Read functions ───────────────────────────────────────────────────────────
-
+# read functions
 def get_task(task_id: str) -> dict | None:
     """
     Fetch a single task by ID. Returns a dict (with result deserialized)
@@ -168,8 +152,7 @@ def get_all_tasks() -> list[dict]:
     return [dict(row) for row in rows]
 
 
-# ── Startup recovery ─────────────────────────────────────────────────────────
-
+# startup recovery  
 def get_stuck_tasks() -> list[dict]:
     """
     Find tasks that were left in 'processing' status from a previous
@@ -181,6 +164,23 @@ def get_stuck_tasks() -> list[dict]:
             "SELECT * FROM tasks WHERE status='processing'"
         ).fetchall()
     return [_row_to_dict(row) for row in rows]
+
+
+def reset_task(task_id: str) -> bool:
+    """Reset a failed task back to pending so it can be re-enqueued. Returns False if not found."""
+    with get_connection() as conn:
+        cur = conn.execute(
+            "UPDATE tasks SET status='pending', error=NULL, updated_at=? WHERE id=? AND status='failed'",
+            (_now(), task_id),
+        )
+    return cur.rowcount > 0
+
+
+def delete_task(task_id: str) -> bool:
+    """Delete a task by ID. Returns True if a row was deleted, False if not found."""
+    with get_connection() as conn:
+        cur = conn.execute("DELETE FROM tasks WHERE id=?", (task_id,))
+    return cur.rowcount > 0
 
 
 def get_pending_tasks() -> list[dict]:

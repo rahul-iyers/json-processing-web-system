@@ -1,11 +1,9 @@
 """
 processing.py
 
-Pure dataset processing logic. No database, no HTTP, no async.
-Takes a parsed JSON dict, returns a result dict.
+pure and isolated dataset processing logic.
+takes a parsed JSON dict, returns a result dict.
 
-Keeping this isolated means it can be unit-tested independently
-and reused without any infrastructure knowledge.
 """
 
 REQUIRED_FIELDS = {"id", "timestamp", "value", "category"}
@@ -13,12 +11,9 @@ REQUIRED_FIELDS = {"id", "timestamp", "value", "category"}
 
 def is_valid_record(record: dict) -> bool:
     """
-    A record is valid if:
-      - It contains all required fields (id, timestamp, value, category)
-      - The 'value' field is numeric (int or float, but not bool)
-
-    We explicitly reject booleans because in Python, bool is a subclass
-    of int — so isinstance(True, int) is True. That's not what we want.
+    a record is valid if:
+      - it contains all required fields (id, timestamp, value, category)
+      - the 'value' field is numeric (int or float, but not bool)
     """
     if not REQUIRED_FIELDS.issubset(record.keys()):
         return False
@@ -34,27 +29,15 @@ def is_valid_record(record: dict) -> bool:
 
 def process_dataset(data: dict) -> dict:
     """
-    Process a parsed dataset JSON and return a result summary.
+    process a parsed dataset JSON and return a result summary.
 
-    Expected input shape:
-        {
-            "dataset_id": "ds_001",
-            "records": [ { "id": ..., "timestamp": ..., "value": ..., "category": ... }, ... ]
-        }
+    expected input shape and return value in accordance to pdf.
 
-    Returns:
-        {
-            "dataset_id": str,
-            "record_count": int,        # all records, including invalid
-            "category_summary": dict,   # counts per category, valid records only
-            "average_value": float,     # mean of value across valid records (None if none)
-            "invalid_records": int
-        }
-
-    Raises:
+    raises:
         ValueError if the top-level structure is malformed (missing dataset_id or records).
-        We let this propagate so the worker can catch it and mark the task FAILED.
+
     """
+    
     if "dataset_id" not in data:
         raise ValueError("Missing required field: 'dataset_id'")
 
@@ -71,7 +54,7 @@ def process_dataset(data: dict) -> dict:
     valid_count = 0
 
     for record in records:
-        # Records must be dicts — anything else (a string, a number, etc.) is invalid
+        # records must be dicts
         if not isinstance(record, dict):
             invalid_count += 1
             continue
@@ -80,7 +63,7 @@ def process_dataset(data: dict) -> dict:
             invalid_count += 1
             continue
 
-        # Valid record — accumulate stats
+        # stat accumulation for a valid record
         category = record["category"]
         value = record["value"]
 

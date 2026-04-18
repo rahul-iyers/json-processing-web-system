@@ -38,6 +38,25 @@
       font-size: 0.9rem;
     }
     button:disabled { background: #93c5fd; cursor: not-allowed; }
+    button.delete-btn {
+      background: none;
+      color: #9ca3af;
+      padding: 0.2rem 0.4rem;
+      font-size: 1rem;
+      line-height: 1;
+      border-radius: 0.4rem;
+    }
+    button.delete-btn:hover { background: #fee2e2; color: #dc2626; }
+    button.retry-btn {
+      background: none;
+      color: #2563eb;
+      border: 1px solid #2563eb;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.78rem;
+      border-radius: 0.4rem;
+    }
+    button.retry-btn:hover { background: #eff6ff; }
+    button.retry-btn:disabled { border-color: #93c5fd; color: #93c5fd; background: none; cursor: not-allowed; }
 
     #upload-msg { margin-top: 0.6rem; font-size: 0.85rem; color: #6b7280; }
     #upload-msg.error { color: #dc2626; }
@@ -185,8 +204,12 @@
       : task.status;
 
     let extra = '';
-    if (task.status === 'failed' && task.error) {
-      extra = `<div class="error-msg">Error: ${esc(task.error)}</div>`;
+    if (task.status === 'failed') {
+      extra = `
+        <div class="error-msg" style="display:flex;align-items:center;gap:.6rem">
+          ${task.error ? `<span>Error: ${esc(task.error)}</span>` : ''}
+          <button class="retry-btn" onclick="retryTask('${esc(task.id)}', this)">Retry</button>
+        </div>`;
     }
     if (task.status === 'completed' && task.result) {
       extra = renderResult(task);
@@ -198,6 +221,7 @@
           <span class="filename" title="${esc(task.filename)}">${esc(task.filename)}</span>
           <span class="dataset-id">${esc(task.dataset_id)}</span>
           <span class="${badgeClass}">${statusLabel}</span>
+          <button class="delete-btn" title="Remove task" onclick="deleteTask('${esc(task.id)}', this)">✕</button>
         </div>
         ${extra}
         <div class="card-footer">Created: ${fmtDate(task.created_at)}</div>
@@ -254,6 +278,42 @@
 
       renderTasks(enriched);
     } catch (_) {}
+  }
+
+  async function retryTask(taskId, btn) {
+    btn.disabled = true;
+    try {
+      const res = await fetch(`/tasks/${taskId}/retry`, { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert('Could not retry task: ' + (body.detail || res.status));
+        btn.disabled = false;
+        return;
+      }
+    } catch (e) {
+      alert('Network error while retrying task.');
+      btn.disabled = false;
+      return;
+    }
+    fetchTasksWithResults();
+  }
+
+  async function deleteTask(taskId, btn) {
+    btn.disabled = true;
+    try {
+      const res = await fetch(`/tasks/${taskId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert('Could not delete task: ' + (body.detail || res.status));
+        btn.disabled = false;
+        return;
+      }
+    } catch (e) {
+      alert('Network error while deleting task.');
+      btn.disabled = false;
+      return;
+    }
+    fetchTasksWithResults();
   }
 
   fetchTasksWithResults();

@@ -72,6 +72,21 @@ def get_task(task_id: str):
     return task
 
 
+@app.post("/tasks/{task_id}/retry")
+async def retry_task(task_id: str):
+    if not database.reset_task(task_id):
+        raise HTTPException(status_code=400, detail="Task not found or not in failed state")
+    await task_queue.put(task_id)
+    return {"task_id": task_id, "status": "pending"}
+
+
+@app.delete("/tasks/{task_id}")
+def delete_task(task_id: str):
+    if not database.delete_task(task_id):
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {"deleted": task_id}
+
+
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 

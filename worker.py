@@ -1,7 +1,6 @@
 import asyncio
 import json
 import pathlib
-
 import database
 import processing
 
@@ -9,7 +8,7 @@ UPLOADS_DIR = pathlib.Path("uploads")
 
 
 async def run_worker(queue: asyncio.Queue) -> None:
-    """Runs forever. Pull task_id from queue, process it, update DB."""
+    """runs forever. pull task_id from queue, process it, update db."""
     while True:
         task_id = await queue.get()
         try:
