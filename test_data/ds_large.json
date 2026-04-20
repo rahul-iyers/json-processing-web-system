@@ -1,0 +1,25 @@
+{
+  "dataset_id": "ds_large",
+  "records": [
+    {"id": "r1",  "timestamp": "2026-03-01T00:00:00Z", "value": 112, "category": "Alpha"},
+    {"id": "r2",  "timestamp": "2026-03-01T00:01:00Z", "value": 238, "category": "Beta"},
+    {"id": "r3",  "timestamp": "2026-03-01T00:02:00Z", "value": 75,  "category": "Alpha"},
+    {"id": "r4",  "timestamp": "2026-03-01T00:03:00Z", "value": 190, "category": "Gamma"},
+    {"id": "r5",  "timestamp": "2026-03-01T00:04:00Z", "value": 305, "category": "Beta"},
+    {"id": "r6",  "timestamp": "2026-03-01T00:05:00Z", "value": 88,  "category": "Alpha"},
+    {"id": "r7",  "timestamp": "2026-03-01T00:06:00Z", "value": 420, "category": "Delta"},
+    {"id": "r8",  "timestamp": "2026-03-01T00:07:00Z", "value": 155, "category": "Gamma"},
+    {"id": "r9",  "timestamp": "2026-03-01T00:08:00Z", "value": 60,  "category": "Beta"},
+    {"id": "r10", "timestamp": "2026-03-01T00:09:00Z", "value": 275, "category": "Alpha"},
+    {"id": "r11", "timestamp": "2026-03-01T00:10:00Z", "value": 390, "category": "Delta"},
+    {"id": "r12", "timestamp": "2026-03-01T00:11:00Z", "value": 143, "category": "Gamma"},
+    {"id": "r13", "timestamp": "2026-03-01T00:12:00Z", "value": 512, "category": "Alpha"},
+    {"id": "r14", "timestamp": "2026-03-01T00:13:00Z", "value": 29,  "category": "Beta"},
+    {"id": "r15", "timestamp": "2026-03-01T00:14:00Z", "value": 678, "category": "Delta"},
+    {"id": "r16", "timestamp": "2026-03-01T00:15:00Z", "value": 201, "category": "Gamma"},
+    {"id": "r17", "timestamp": "2026-03-01T00:16:00Z", "value": 94,  "category": "Alpha"},
+    {"id": "r18", "timestamp": "2026-03-01T00:17:00Z", "value": 333, "category": "Beta"},
+    {"id": "r19", "timestamp": "2026-03-01T00:18:00Z", "value": 450, "category": "Delta"},
+    {"id": "r20", "timestamp": "2026-03-01T00:19:00Z", "value": 117, "category": "Gamma"}
+  ]
+}
