@@ -12,8 +12,6 @@ open http://localhost:8000
 ```
 
 ## REST API
-| Method | Path | Description |
-|--------|------|-------------|
 | `POST` | `/datasets` | Upload a JSON file and queue it for processing |
 | `GET` | `/tasks` | List all tasks |
 | `GET` | `/tasks/{task_id}` | Get a single task with full results |
@@ -27,4 +25,4 @@ open http://localhost:8000
 
 **`await asyncio.sleep(15)`** is used inside the worker to simulate long computation, keeping the event loop free to serve HTTP requests during that window.
 
-**Uploads stored as files.** Raw JSON bytes are saved to `uploads/{task_id}.json`. Only the string task ID travels over the queue, keeping memory usage flat regardless of file size.
+**Uploads stored as files.** Raw JSON bytes are saved to `uploads/{task_id}.json`.
